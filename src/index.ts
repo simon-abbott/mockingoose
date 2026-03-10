@@ -212,8 +212,23 @@ ops.forEach((op) => {
 
 // Patch Query.prototype.exec
 (mongoose.Query.prototype as any).exec = createMockFn().mockImplementation(
-  function (this: any, cb?: Function) {
-    return mockedReturn.call(this, cb);
+  async function (this: any, cb?: Function) {
+    // Ensure that the $__ property exists (needed for some hooks)
+    this.$__ ??= {};
+
+    const op = this.op;
+    const hooks = this.model.hooks;
+    try {
+      await hooks.execPre(op, this);
+      const ret = await mockedReturn.call(this);
+      await hooks.execPost(op, this, [ret]);
+
+      if (cb) return cb(null, ret);
+      return ret;
+    } catch (err) {
+      if (cb) return cb(err);
+      throw err;
+    }
   }
 );
 

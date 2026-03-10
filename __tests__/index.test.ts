@@ -863,5 +863,46 @@ describe('mockingoose', () => {
         expect(postHook).toHaveBeenCalled();
       });
     });
+
+    describe('Query operations', () => {
+      const ops = [
+        'find',
+        'findOne',
+        'distinct',
+        'findOneAndUpdate',
+        'findOneAndDelete',
+        'findOneAndReplace',
+        'replaceOne',
+        'updateOne',
+        'updateMany',
+        'deleteOne',
+        'deleteMany',
+      ] as const;
+
+      it.each(ops)('%s', async (op) => {
+        const schema = new mongoose.Schema({
+          name: String,
+        });
+
+        const preHook = vi.fn();
+        const postHook = vi.fn();
+        schema.pre(op, preHook);
+        schema.post(op, postHook);
+
+        const Model = mongoose.model(`ModelQueryHooks_${op}`, schema);
+        mockingoose(Model).toReturn({ name: 'test' }, op);
+
+        const args: any[] = [];
+
+        if (['updateOne', 'updateMany', 'replaceOne'].includes(op)) {
+          args.push({}, {});
+        }
+
+        await (Model as any)[op](...args);
+
+        expect(preHook).toHaveBeenCalled();
+        expect(postHook).toHaveBeenCalled();
+      });
+    });
   });
 });
