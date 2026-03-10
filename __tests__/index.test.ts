@@ -816,4 +816,32 @@ describe('mockingoose', () => {
       expect(result.toObject()).toMatchObject({ name: 'test' });
     });
   });
+
+  describe('hooks', () => {
+    describe('Document.save', () => {
+      it('should call hooks', async () => {
+        const schema = new mongoose.Schema({
+          name: String,
+        });
+
+        const preHook = vi.fn();
+        const postHook = vi.fn();
+        schema.pre('save', preHook);
+        schema.post('save', postHook);
+
+        const Model = mongoose.model('ModelSaveHooks', schema);
+        mockingoose(Model).toReturn({ name: 'test' }, 'save');
+        const doc = await Model.create({ name: 'test' });
+
+        preHook.mockClear();
+        postHook.mockClear();
+
+        doc.name = 'test2';
+        await doc.save();
+
+        expect(preHook).toHaveBeenCalled();
+        expect(postHook).toHaveBeenCalled();
+      });
+    });
+  });
 });
