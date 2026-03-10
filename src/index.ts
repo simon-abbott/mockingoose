@@ -382,17 +382,14 @@ ops.forEach((op) => {
   return mockedReturn.call(this, cb);
 });
 
-// Patch instance methods (save, remove, $save)
-const instance = ['save', '$save'] as const;
-
-instance.forEach((methodName) => {
+['save', '$save'].forEach((methodName) => {
   (mongoose.Model.prototype as any)[methodName] =
     createMockFn().mockImplementation(async function (
       this: any,
       options: any,
       cb?: Function
     ) {
-      const op = methodName;
+      const op = 'save';
       const { modelName } = this.constructor;
 
       if (typeof options === 'function') {

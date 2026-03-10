@@ -818,6 +818,26 @@ describe('mockingoose', () => {
   });
 
   describe('hooks', () => {
+    describe('Model.create', () => {
+      it('should call hooks', async () => {
+        const schema = new mongoose.Schema({
+          name: String,
+        });
+
+        const preHook = vi.fn();
+        const postHook = vi.fn();
+        schema.pre('save', preHook);
+        schema.post('save', postHook);
+
+        const Model = mongoose.model('ModelCreateHooks', schema);
+        mockingoose(Model).toReturn({ name: 'test' }, 'save');
+        await Model.create({ name: 'test' });
+
+        expect(preHook).toHaveBeenCalled();
+        expect(postHook).toHaveBeenCalled();
+      });
+    });
+
     describe('Document.save', () => {
       it('should call hooks', async () => {
         const schema = new mongoose.Schema({
